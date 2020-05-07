@@ -14,6 +14,8 @@ parser.add_argument('--force', '-f', action='store_true', default=False, help='I
 
 args = parser.parse_args()
 
+current_interval = {}
+
 
 def PathCanonicalize(filename):
   # Given a path, if it's absolute, return it, if it's relative, assume it's
@@ -27,10 +29,9 @@ def PathCanonicalize(filename):
 def LogPathToFilePath(log_path, file_hash):
     return os.path.join(os.path.dirname(log_path), file_hash[0], '%s.OGG' % file_hash)
 
-
 def ParseClipsortLog(log_path):
+    global current_interval
     interval_collection = []
-    current_interval = {'interval_number': 0, 'users': []}
     with open(log_path, 'r') as my_file:
       while True:
           line = my_file.readline().strip()
@@ -38,21 +39,18 @@ def ParseClipsortLog(log_path):
               break
           if line.startswith('interval'):
               if current_interval:
-                  interval_collection.append(current_interval)
+                  interval_collection.append(current_interval.copy())
               interval_split = line.split(' ')
-              interval_num=int(interval_split[1])
-              bpm=int(interval_split[2])
-              bpi=int(interval_split[3])
-              current_interval = {
-                      'interval_number': interval_num,
-                      'bpm': bpm,
-                      'bpi': bpi,
-                      'users': [],
-                      }
+              current_interval['interval_number'] = int(interval_split[1])
+              current_interval['bpm'] = int(interval_split[2])
+              current_interval['bpi'] = int(interval_split[3])
+              current_interval['users'] = []
           elif line.startswith('user'):
               quote_split=line.split('"')
               file_hash=quote_split[0].split(' ')[1]
               filename=LogPathToFilePath(log_path, file_hash)
+              if not os.path.isfile(filename):
+                  continue
               username=quote_split[1].split('@')[0]
               channel_num=int(quote_split[2])
               channel_name=quote_split[3]
@@ -63,6 +61,8 @@ def ParseClipsortLog(log_path):
                   'channel_number': channel_num,
                   'channel_name': channel_name,
                   })
+    if not interval_collection[0]['users']:
+        del interval_collection[0]
     return sorted(interval_collection, key=lambda a: a['interval_number'])
 
 
