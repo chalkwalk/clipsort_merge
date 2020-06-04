@@ -105,6 +105,8 @@ def CreateMergedSessionArchive(output_dir, clipsort_logs):
             for user in interval['users']:
                 print('user', user['hash'], '"%s"' % user['user'], user['channel_number'], '"%s"' % user['channel_name'], file=my_file)
                 audio_file_destination = os.path.join(output_dir, user['hash'][0], os.path.basename(user['file']))
+                if os.path.islink(audio_file_destination) and args.force:
+                    os.remove(audio_file_destination)
                 os.symlink(user['file'], audio_file_destination)
     return True
 
