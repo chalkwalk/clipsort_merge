@@ -30,7 +30,7 @@ def main():
             if line.startswith('interval'):
                 interval_number += 1
                 elements = line.strip().split(' ')
-                lines.append('interval %s %s %s' % (interval_number, elements[1], elements[2]))
+                lines.append('interval %s %s %s' % (interval_number, elements[2], elements[3]))
             else:
                 lines.append(line.strip())
     with open('%s.new' % clipsort, 'w') as f:
